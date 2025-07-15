@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reparto de Tortillas</title>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+    #map { height: 100%; }
+    .add-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      font-size: 30px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .form-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      padding: 16px;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+      display: none;
+    }
+    .form-sheet input, .form-sheet textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .form-sheet button {
+      background: #4CAF50;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      width: 100%;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <button class="add-button" onclick="showForm()">+</button>
+
+  <div class="form-sheet" id="formSheet">
+    <input type="text" id="name" placeholder="Nombre" />
+    <input type="text" id="address" placeholder="Dirección" />
+    <input type="tel" id="phone" placeholder="Teléfono" />
+    <input type="number" id="quantity" placeholder="Cantidad (kg)" />
+    <input type="number" id="price" placeholder="Precio (MXN)" />
+    <input type="date" id="firstDate" />
+    <textarea id="notes" placeholder="Notas"></textarea>
+    <button onclick="addClient()">Guardar cliente</button>
+  </div>
+
+  <script>
+    let map;
+    let clients = JSON.parse(localStorage.getItem('clients') || '[]');
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 19.8125, lng: -90.5328 }, // Lerma, Campeche
+        zoom: 15,
+      });
+
+      clients.forEach(c => addMarker(c));
+
+      map.addListener('click', (e) => {
+        document.querySelector('#formSheet').dataset.lat = e.latLng.lat();
+        document.querySelector('#formSheet').dataset.lng = e.latLng.lng();
+        showForm();
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userPos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            map.setCenter(userPos);
+
+            new google.maps.Marker({
+              position: userPos,
+              map: map,
+              title: 'Aquí estás tú',
+              icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            });
+          },
+          (error) => {
+            console.warn('Error obteniendo ubicación:', error);
+          }
+        );
+      }
+    }
+
+    function showForm() {
+      document.getElementById('formSheet').style.display = 'block';
+    }
+
+    function hideForm() {
+      document.getElementById('formSheet').style.display = 'none';
+    }
+
+    function addClient() {
+      const lat = parseFloat(document.querySelector('#formSheet').dataset.lat);
+      const lng = parseFloat(document.querySelector('#formSheet').dataset.lng);
+
+      const client = {
+        name: document.getElementById('name').value,
+        address: document.getElementById('address').value,
+        phone: document.getElementById('phone').value,
+        quantity: parseFloat(document.getElementById('quantity').value),
+        price: parseFloat(document.getElementById('price').value),
+        firstDate: document.getElementById('firstDate').value,
+        notes: document.getElementById('notes').value,
+        lat, lng,
+        delivered: false
+      };
+
+      clients.push(client);
+      localStorage.setItem('clients', JSON.stringify(clients));
+      addMarker(client);
+      hideForm();
+    }
+
+    function addMarker(client) {
+      const marker = new google.maps.Marker({
+        position: { lat: client.lat, lng: client.lng },
+        map,
+        title: client.name,
+        icon: client.delivered ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : undefined
+      });
+
+      const info = new google.maps.InfoWindow({
+        content: `
+          <div>
+            <strong>${client.name}</strong><br>
+            ${client.address}<br>
+            ${client.quantity} kg - $${client.price}<br>
+            <button onclick="markDelivered('${client.name}')">Marcar como entregado</button>
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => info.open(map, marker));
+    }
+
+    function markDelivered(name) {
+      clients = clients.map(c => {
+        if (c.name === name) c.delivered = true;
+        return c;
+      });
+      localStorage.setItem('clients', JSON.stringify(clients));
+      alert('Marcado como entregado. Puedes cerrar esta ventana o seguir repartiendo.');
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoPfHm9BlRCtX3oOvqBkKt2D3lwXMTS60&callback=initMap" async defer></script>
+</body>
+</html>
