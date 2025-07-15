@@ -108,6 +108,8 @@
   <button class="summary-button" onclick="toggleSummary()">Cantidad a entregar</button>
 
   <div class="form-sheet" id="formSheet">
+    <button onclick="hideForm()" style="float:right; background:#f44336; color:white; border:none; padding:5px 10px; border-radius:5px;">✖</button>
+    <h3>Agregar cliente</h3>
     <input type="text" id="name" placeholder="Nombre" />
     <input type="text" id="address" placeholder="Dirección" />
     <input type="tel" id="phone" placeholder="Teléfono" />
@@ -134,7 +136,7 @@
     const today = new Date().toISOString().split('T')[0];
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 19.8125, lng: -90.5328 },
+        center: { lat: 19.8113946, lng: -90.5928903 },
         zoom: 15,
       });
 
@@ -171,6 +173,10 @@
 
     function showForm() {
       document.getElementById('formSheet').style.display = 'block';
+    }
+
+    function hideForm() {
+      document.getElementById('formSheet').style.display = 'none';
     }
 
     function toggleClientList() {
@@ -309,4 +315,5 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoPfHm9BlRCtX3oOvqBkKt2D3lwXMTS60&callback=initMap" async defer></script>
 </body>
 </html>
+
 
